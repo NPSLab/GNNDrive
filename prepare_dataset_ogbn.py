@@ -10,14 +10,15 @@ import os
 # Parse arguments
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--dataset', type=str, default='ogbn-papers100M')
+argparser.add_argument('--dataset-root', type=str, default='./data/dataset')
 args = argparser.parse_args()
 
 # Download/load dataset
 print('Loading dataset...')
-root = './data/dataset'
-os.makedirs(root, exist_ok=True)
-dataset = PygNodePropPredDataset(args.dataset, root)
-dataset_path = os.path.join(root, args.dataset + '-ginex')
+dataset_root = args.dataset_root
+os.makedirs(dataset_root, exist_ok=True)
+dataset = PygNodePropPredDataset(args.dataset, dataset_root)
+dataset_path = os.path.join(dataset_root, args.dataset + '-ginex')
 print('Done!')
 
 # Construct sparse formats

@@ -24,6 +24,7 @@ argparser.add_argument('--num-hiddens', type=int, default=256)
 argparser.add_argument('--lr', type=float, default=0.003)
 argparser.add_argument('--model', type=str, default="sage")
 argparser.add_argument('--dataset', type=str, default='ogbn-papers100M')
+argparser.add_argument('--dataset-root', type=str, default='./data/dataset')
 argparser.add_argument('--sizes', type=str, default='10,10,10')
 argparser.add_argument('--train-only', dest='train_only', default=False, action='store_true')
 argparser.add_argument('--features', type=int, default=128)
@@ -33,7 +34,7 @@ argparser.add_argument('--fallback', type=int, default=0)
 args = argparser.parse_args()
 
 # Set environment and path
-dataset_path = os.path.join('./data/dataset', args.dataset + '-ginex')
+dataset_path = os.path.join(args.dataset_root, args.dataset + '-ginex')
 split_idx_path = os.path.join(dataset_path, 'split_idx.pth')
 
 # Prepare dataset
