@@ -12,7 +12,13 @@ import math
 from lib.data import *
 from lib.neighbor_sampler import MMAPNeighborSampler
 from lib.utils import *
-from lib.offload import *
+
+
+if io_uring_support():
+    from lib.offload import *
+else:
+    print("io_uring is not supported, will use libaio instead")
+    from lib.offload_libaio import *
 
 # Parse arguments
 argparser = argparse.ArgumentParser()

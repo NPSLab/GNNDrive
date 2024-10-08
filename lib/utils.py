@@ -1,4 +1,4 @@
-from lib.cpp_extension.wrapper import *
+from lib.cpp_extension.wrapper import free, gather, mt_load, update, sample
 
 
 def tensor_free(t):
@@ -27,3 +27,11 @@ def cache_update(cache, batch_inputs, in_indices, in_positions, out_indices):
 
 def fill_neighbor_cache(cache, rowptr, col, cached_idx, address_table, num_entries):
     sample.fill_neighbor_cache(cache, rowptr, col, cached_idx, address_table, num_entries)
+
+def io_uring_support():
+    import os
+    if not os.path.exists('/usr/include/linux/io_uring.h'):
+        return False
+    else:
+        from lib.cpp_extension.wrapper import io_uring_support
+        return io_uring_support.io_uring_support()
