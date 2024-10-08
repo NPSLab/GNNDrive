@@ -18,7 +18,7 @@ offload = load(name='offload', sources=[os.path.join(dir_path, 'offload.cpp')],
                extra_cflags=['-fopenmp', '-g', '-lrt', '-I', cuda_include, '-L', cuda_lib], 
                extra_ldflags=['-lgomp', '-luring', '-lcuda'])
 
-offload_libaio = load(name='offload', sources=[os.path.join(dir_path, 'offload_libaio.cpp')], 
+offload_libaio = load(name='offload_libaio', sources=[os.path.join(dir_path, 'offload_libaio.cpp')], 
                extra_cflags=['-fopenmp', '-g', '-lrt', '-I', cuda_include, '-L', cuda_lib], 
                extra_ldflags=['-lgomp', '-laio', '-lcuda'])
 
