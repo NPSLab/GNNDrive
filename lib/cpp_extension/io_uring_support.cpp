@@ -16,7 +16,7 @@ bool io_uring_support() {
   }
 }
 
-PYBIND11_MODULE(offload, m)
+PYBIND11_MODULE(io_uring_support, m)
 {
     m.def("io_uring_support", []() {
         return io_uring_support();
