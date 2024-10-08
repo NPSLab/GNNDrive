@@ -10,7 +10,7 @@ update = load(name='update', sources=[os.path.join(dir_path, 'update.cpp')], ext
 free = load(name='free', sources=[os.path.join(dir_path, 'free.cpp')], extra_cflags=['-O2'])
 io_uring_support = load(name='io_uring_support', sources=[os.path.join(dir_path, 'io_uring_support.cpp')], extra_cflags=['-O2'])
 
-def io_uring_support():
+def check_io_uring_support():
     import os
     if not os.path.exists('/usr/include/linux/io_uring.h'):
         return False
@@ -21,7 +21,7 @@ cuda_path = '/usr/local/cuda'
 cuda_include = os.path.join(cuda_path, 'include')
 cuda_lib = os.path.join(cuda_path, 'lib64')
 
-if io_uring_support():
+if check_io_uring_support():
     print("io_uring is supported, will use io_uring offloading")
     offload = load(name='offload', sources=[os.path.join(dir_path, 'offload.cpp')], 
                extra_cflags=['-fopenmp', '-g', '-lrt', '-I', cuda_include, '-L', cuda_lib], 
