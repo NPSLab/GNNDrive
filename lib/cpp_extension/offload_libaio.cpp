@@ -549,7 +549,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             remap_data[n] = index * this->group_size + offset;
             this->map_table[key].index = index;
             this->map_table[key].iocb = iocb_ptr;        
-            this->bacerr_lockgoto errk_index[index] = key;
+            this->back_index[index] = key;
 
             float *f_buffer;
             f_buffer = this->cache_data + host_index * this->group_size * this->feature_dim;
