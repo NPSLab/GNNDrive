@@ -360,7 +360,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             unsigned f_nbytes = this->feature_dim * sizeof(float);
             if (f_nbytes < ALIGNMENT)
                 f_nbytes = ALIGNMENT;
-            __u64 f_offset = key * this->feature_dim * sizeof(float);
+            uint64_t f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
             int64_t *keyptr = new int64_t;
             *keyptr = key;
@@ -556,7 +556,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             unsigned f_nbytes = this->feature_dim * sizeof(float);
             if (f_nbytes < ALIGNMENT)
                 f_nbytes = ALIGNMENT;
-            __u64 f_offset = key * this->feature_dim * sizeof(float);
+            uint64_t f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
             int64_t *keyptr = new int64_t;
             *keyptr = key;

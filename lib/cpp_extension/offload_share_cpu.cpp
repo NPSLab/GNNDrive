@@ -333,7 +333,7 @@ torch::Tensor CPUOffloader::cpu_async_load(torch::Tensor &idx)
             unsigned f_nbytes = this->feature_dim * sizeof(float);
             if (f_nbytes < ALIGNMENT)
                 f_nbytes = ALIGNMENT;
-            __u64 f_offset = key * this->feature_dim * sizeof(float);
+            uint64_t f_offset = key * this->feature_dim * sizeof(float);
             io_uring_prep_read(sqe, this->fd, f_buffer, f_nbytes, f_offset);
             sqe->user_data = static_cast<uint64_t>(key);
             io_uring_submit(&ring);
