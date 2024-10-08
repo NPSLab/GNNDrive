@@ -13,14 +13,7 @@ from lib.data import *
 from lib.neighbor_sampler import MMAPNeighborSampler
 from lib.utils import *
 
-
-if io_uring_support():
-    from lib.offload import *
-    offloader_func = offload.Offloader
-else:
-    print("io_uring is not supported, will use libaio instead")
-    from lib.offload_libaio import *
-    offloader_func = offload_libaio.Offloader_libaio
+from lib.offload import *
 
 # Parse arguments
 argparser = argparse.ArgumentParser()
@@ -78,14 +71,14 @@ indptr, indices, y, num_features, num_classes, num_nodes, train_idx, valid_idx, 
 # Define model
 if args.compute_type == 'cpu':
     device = torch.device('cpu')
-    offloader = offloader_func(features_path, num_nodes, num_features, cache_size, 'cpu', 0, 0)
+    offloader = offload.Offloader(features_path, num_nodes, num_features, cache_size, 'cpu', 0, 0)
 else:
     device = torch.device('cuda:%d' % args.gpu)
     torch.cuda.set_device(device)
     if (fallback_mode):
-        offloader = offloader_func(features_path, num_nodes, num_features, cache_size, 'cpu', args.gpu, 0)
+        offloader = offload.Offloader(features_path, num_nodes, num_features, cache_size, 'cpu', args.gpu, 0)
     else:
-        offloader = offloader_func(features_path, num_nodes, num_features, cache_size, 'gpu', args.gpu, stage_size)
+        offloader = offload.Offloader(features_path, num_nodes, num_features, cache_size, 'gpu', args.gpu, stage_size)
 
 x = offloader.get_tensor()
 

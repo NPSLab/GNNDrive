@@ -655,9 +655,9 @@ void Offloader::release(torch::Tensor &idx)
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(offload_libaio, m)
+PYBIND11_MODULE(offload, m)
 {
-    py::class_<Offloader>(m, "Offloader_libaio")
+    py::class_<Offloader>(m, "Offloader")
         .def(py::init<const std::string &, const int64_t, const int64_t, const int64_t, 
              const std::string &, int, int>(),
              py::arg("filename"), py::arg("node_num"), py::arg("dim"), py::arg("buffer_size"), 

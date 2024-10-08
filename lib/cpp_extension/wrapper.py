@@ -10,15 +10,25 @@ update = load(name='update', sources=[os.path.join(dir_path, 'update.cpp')], ext
 free = load(name='free', sources=[os.path.join(dir_path, 'free.cpp')], extra_cflags=['-O2'])
 io_uring_support = load(name='io_uring_support', sources=[os.path.join(dir_path, 'io_uring_support.cpp')], extra_cflags=['-O2'])
 
+def io_uring_support():
+    import os
+    if not os.path.exists('/usr/include/linux/io_uring.h'):
+        return False
+    else:
+        return io_uring_support.io_uring_support()
+
 cuda_path = '/usr/local/cuda'
 cuda_include = os.path.join(cuda_path, 'include')
 cuda_lib = os.path.join(cuda_path, 'lib64')
 
-offload = load(name='offload', sources=[os.path.join(dir_path, 'offload.cpp')], 
+if io_uring_support():
+    print("io_uring is supported, will use io_uring offloading")
+    offload = load(name='offload', sources=[os.path.join(dir_path, 'offload.cpp')], 
                extra_cflags=['-fopenmp', '-g', '-lrt', '-I', cuda_include, '-L', cuda_lib], 
                extra_ldflags=['-lgomp', '-luring', '-lcuda'])
-
-offload_libaio = load(name='offload_libaio', sources=[os.path.join(dir_path, 'offload_libaio.cpp')], 
+else:
+    print("io_uring is not supported, will use libaio instead")
+    offload = load(name='offload', sources=[os.path.join(dir_path, 'offload_libaio.cpp')], 
                extra_cflags=['-fopenmp', '-g', '-lrt', '-I', cuda_include, '-L', cuda_lib], 
                extra_ldflags=['-lgomp', '-laio', '-lcuda'])
 
