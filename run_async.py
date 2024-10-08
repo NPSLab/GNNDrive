@@ -15,11 +15,11 @@ from lib.utils import *
 
 
 if io_uring_support():
-    from lib.offload import offload
+    from lib.offload import *
     offloader_func = offload.Offloader
 else:
     print("io_uring is not supported, will use libaio instead")
-    from lib.offload_libaio import offload_libaio
+    from lib.offload_libaio import *
     offloader_func = offload_libaio.Offloader_libaio
 
 # Parse arguments

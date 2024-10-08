@@ -1,4 +1,4 @@
-from lib.cpp_extension.wrapper import free, gather, mt_load, update, sample
+from lib.cpp_extension.wrapper import *
 
 
 def tensor_free(t):
