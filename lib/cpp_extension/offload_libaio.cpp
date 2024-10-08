@@ -437,7 +437,7 @@ void Offloader::load_callback(int key, cudaStream_t& cuda_read_stream)
     int index = this->map_table[key].index;
 
     this->map_table[key].valid = 1;
-    delete this->map_table[cqe_key].iocb;
+    delete this->map_table[key].iocb;
 
     float *host_buffer;
     host_buffer = this->cache_data + host_index * this->group_size * this->feature_dim;
