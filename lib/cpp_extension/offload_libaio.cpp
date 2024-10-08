@@ -362,7 +362,9 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
                 f_nbytes = ALIGNMENT;
             __u64 f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
-            iocb_ptr->data = reinterpret_cast<void *>(key);
+            int64_t *keyptr = new int64_t;
+            keyptr* = key;
+            iocb_ptr->data = reinterpret_cast<void *>(keyptr);
             ret = io_submit(ctx, 1, &iocb_ptr);
             if (ret < 0)
             {
@@ -374,7 +376,8 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             ret = io_getevents(ctx, 0, 1, events, nullptr);
             if (ret > 0)
             {
-                int64_t cqe_key = static_cast<int64_t>(events[0].data);
+                int64_t cqe_key = *reinterpret_cast<int64_t *>(events[0].data);
+                delete reinterpret_cast<int64_t *>(events[0].data);
                 if (events[0].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in cpu: %s %d\n", strerror(-events[0].res), cqe_key);
@@ -396,7 +399,8 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             }
             for (int i = 0; i < ret; i++)
             {
-                int64_t cqe_key = static_cast<int64_t>(events[i].data);
+                int64_t cqe_key = *reinterpret_cast<int64_t *>(events[i].data);
+                delete reinterpret_cast<int64_t *>(events[0].data);
                 if (events[i].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in cpu: %s %d\n", strerror(-events[i].res), cqe_key);
@@ -554,7 +558,9 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
                 f_nbytes = ALIGNMENT;
             __u64 f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
-            iocb_ptr->data = reinterpret_cast<void *>(key);
+            int64_t *keyptr = new int64_t;
+            keyptr* = key;
+            iocb_ptr->data = reinterpret_cast<void *>(keyptr);
             ret = io_submit(ctx, 1, &iocb_ptr);
             if (ret < 0)
             {
@@ -566,7 +572,8 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             ret = io_getevents(ctx, 0, 1, events, nullptr);
             if (ret > 0)
             {
-                int64_t cqe_key = static_cast<int64_t>(events[0].data);
+                int64_t cqe_key = *reinterpret_cast<int64_t *>(events[0].data);
+                delete reinterpret_cast<int64_t *>(events[0].data);
                 if (events[0].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in gpu: %s %d\n", strerror(-events[0].res), cqe_key);
@@ -587,7 +594,8 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             }
             for (int i = 0; i < ret; i++)
             {
-                int64_t cqe_key = static_cast<int64_t>(events[i].data);
+                int64_t cqe_key = *reinterpret_cast<int64_t *>(events[i].data);
+                delete reinterpret_cast<int64_t *>(events[0].data);
                 if (events[i].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in gpu: %s %d\n", strerror(-events[i].res), cqe_key);
