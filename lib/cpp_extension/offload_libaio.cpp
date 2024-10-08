@@ -363,7 +363,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             __u64 f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
             int64_t *keyptr = new int64_t;
-            keyptr* = key;
+            *keyptr = key;
             iocb_ptr->data = reinterpret_cast<void *>(keyptr);
             ret = io_submit(ctx, 1, &iocb_ptr);
             if (ret < 0)
@@ -559,7 +559,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             __u64 f_offset = key * this->feature_dim * sizeof(float);
             io_prep_pread(iocb_ptr, this->fd, f_buffer, f_nbytes, f_offset);
             int64_t *keyptr = new int64_t;
-            keyptr* = key;
+            *keyptr = key;
             iocb_ptr->data = reinterpret_cast<void *>(keyptr);
             ret = io_submit(ctx, 1, &iocb_ptr);
             if (ret < 0)
