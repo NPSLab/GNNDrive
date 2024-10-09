@@ -16,6 +16,7 @@
 #include <libaio.h>
 #include <cuda_runtime.h>
 #include <cstring>
+#include <cstdlib>
 
 #define ALIGNMENT 512
 #define ASYNC_ENYRY_NUM 80
@@ -227,11 +228,20 @@ Offloader::~Offloader()
     switch (this->async_type)
     {
     case AsyncType::CPU:
-        free(this->cache_data);
+        if(this->cache_data){
+            free(this->cache_data);
+            this->cache_data = nullptr;
+        }
         break;
     case AsyncType::GPU:
-        cudaFreeHost(this->cache_data);
-        cudaFree(this->device_cache);
+        if(this->cache_data){
+            cudaFreeHost(this->cache_data);
+            this->cache_data = nullptr;
+        }
+        if(this->device_cache){
+            cudaFree(this->device_cache);
+            this->device_cache = nullptr;
+        }
         break;
     case AsyncType::GDS:
         break;
@@ -341,9 +351,6 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
                 }
             }
 
-            // Add to iocb map
-            struct iocb *iocb_ptr = new struct iocb;
-
             int64_t index = get_free_index();
             if (index < 0)
             {
@@ -352,6 +359,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             }
             remap_data[n] = index * this->group_size + offset;
             this->map_table[key].index = index;
+            struct iocb *iocb_ptr = new struct iocb;
             this->map_table[key].iocb = iocb_ptr;
             this->back_index[index] = key;
 
@@ -369,6 +377,8 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             if (ret < 0)
             {
                 fprintf(stderr, "Error in io_submit: %s\n", strerror(-ret));
+                delete iocb_ptr;
+                delete keyptr;
                 goto err_lock;
             }
             async_loading += 1;
@@ -528,9 +538,6 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
                 }
             }
 
-            // Add to iocb map
-            struct iocb *iocb_ptr = new struct iocb;
-
             int64_t host_index = this->stage_size / t_total * t_id + n;
             if (host_index >= this->stage_size)
             {
@@ -548,6 +555,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             }
             remap_data[n] = index * this->group_size + offset;
             this->map_table[key].index = index;
+            struct iocb *iocb_ptr = new struct iocb;
             this->map_table[key].iocb = iocb_ptr;        
             this->back_index[index] = key;
 
@@ -565,6 +573,8 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             if (ret < 0)
             {
                 fprintf(stderr, "Error in io_submit: %s\n", strerror(-ret));
+                delete iocb_ptr;
+                delete keyptr;
                 goto err_lock;
             }
             async_loading += 1;
