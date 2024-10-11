@@ -331,6 +331,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
         if (ret != 0)
         {
             fprintf(stderr, "Unable to setup io_context: %s\n", strerror(-ret));
+            io_destroy(ctx);
             goto err_lock;
         }
 
@@ -355,6 +356,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             if (index < 0)
             {
                 fprintf(stderr, "No free table.\n");
+                io_destroy(ctx);
                 goto err_lock;
             }
             remap_data[n] = index * this->group_size + offset;
@@ -379,6 +381,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
                 fprintf(stderr, "Error in io_submit: %s\n", strerror(-ret));
                 delete iocb_ptr;
                 delete keyptr;
+                io_destroy(ctx);
                 goto err_lock;
             }
             async_loading += 1;
@@ -405,12 +408,13 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
             if (ret < 0)
             {
                 fprintf(stderr, "Error waiting for completion: %s\n", strerror(-ret));
+                io_destroy(ctx);
                 goto err;
             }
             for (int i = 0; i < ret; i++)
             {
                 int64_t cqe_key = *reinterpret_cast<int64_t *>(events[i].data);
-                delete reinterpret_cast<int64_t *>(events[0].data);
+                delete reinterpret_cast<int64_t *>(events[i].data);
                 if (events[i].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in cpu: %s %d\n", strerror(-events[i].res), cqe_key);
@@ -518,6 +522,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
         if (ret != 0)
         {
             fprintf(stderr, "Unable to setup io_context: %s\n", strerror(-ret));
+            io_destroy(ctx);
             goto err_lock;
         }
 
@@ -542,6 +547,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             if (host_index >= this->stage_size)
             {
                 fprintf(stderr, "No free table in host. %d %d %d\n", this->stage_size, host_index, n);
+                io_destroy(ctx);
                 goto err_lock;
             } else {
                 this->stage_map_table[key] = host_index;
@@ -551,6 +557,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             if (index < 0)
             {
                 fprintf(stderr, "No free table in gpu.\n");
+                io_destroy(ctx);
                 goto err_lock;
             }
             remap_data[n] = index * this->group_size + offset;
@@ -575,6 +582,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
                 fprintf(stderr, "Error in io_submit: %s\n", strerror(-ret));
                 delete iocb_ptr;
                 delete keyptr;
+                io_destroy(ctx);
                 goto err_lock;
             }
             async_loading += 1;
@@ -600,12 +608,13 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
             if (ret < 0)
             {
                 fprintf(stderr, "Error waiting for completion: %s\n", strerror(-ret));
+                io_destroy(ctx);
                 goto err;
             }
             for (int i = 0; i < ret; i++)
             {
                 int64_t cqe_key = *reinterpret_cast<int64_t *>(events[i].data);
-                delete reinterpret_cast<int64_t *>(events[0].data);
+                delete reinterpret_cast<int64_t *>(events[i].data);
                 if (events[i].res < 0)
                 {
                     fprintf(stderr, "Error in async operation in gpu: %s %d\n", strerror(-events[i].res), cqe_key);
