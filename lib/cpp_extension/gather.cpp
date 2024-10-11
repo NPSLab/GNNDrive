@@ -26,7 +26,7 @@ torch::Tensor gather_mmap(torch::Tensor features, torch::Tensor idx, int64_t fea
     auto features_data = features.data_ptr<float>();
     auto idx_data = idx.data_ptr<int64_t>();
 
-    #pragma omp parallel for num_threads(atoi(getenv("GINEX_NUM_THREADS")))
+    #pragma omp parallel for
     for (int64_t n = 0; n < num_idx; n++) {
         int64_t i;
         int64_t offset;
