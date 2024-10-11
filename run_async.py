@@ -351,8 +351,6 @@ if __name__=='__main__':
     model.reset_parameters()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    val_loss, val_acc = inference(mode='valid')
-    test_loss, test_acc = inference(mode='test')
     best_val_acc = final_test_acc = 0
     for epoch in range(args.num_epochs):
         start = time.time()
