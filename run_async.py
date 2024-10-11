@@ -320,22 +320,20 @@ def inference(mode='test'):
     # Sample
     for step, (batch_size, ids, adjs) in enumerate(inference_loader):
         # Gather
-        batch_inputs = gather_mmap(mmap_x, ids)
-        batch_labels = y[ids[:batch_size]]
+        batch_inputs = gather_mmap(mmap_x, ids).to(device)
+        batch_labels = y[ids[:batch_size]].to(device)
 
-        # Transfer
-        batch_inputs_cuda = batch_inputs.to(device)
-        batch_labels_cuda = batch_labels.to(device)
         adjs = [adj.to(device) for adj in adjs]
 
         # Forward
-        out = model(batch_inputs_cuda, adjs)
-        loss = F.nll_loss(out, batch_labels_cuda.long())
+        out = model(batch_inputs, adjs)
+        loss = F.nll_loss(out, batch_labels.long())
         tensor_free(batch_inputs)
 
-        torch.cuda.synchronize()
+        if args.compute_type == 'gpu':
+            torch.cuda.synchronize()
         total_loss += float(loss)
-        total_correct += int(out.argmax(dim=-1).eq(batch_labels_cuda.long()).sum())
+        total_correct += int(out.argmax(dim=-1).eq(batch_labels.long()).sum())
         pbar.update(batch_size)
 
     pbar.close()
@@ -353,6 +351,8 @@ if __name__=='__main__':
     model.reset_parameters()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
+    val_loss, val_acc = inference(mode='valid')
+    test_loss, test_acc = inference(mode='test')
     best_val_acc = final_test_acc = 0
     for epoch in range(args.num_epochs):
         start = time.time()
