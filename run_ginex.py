@@ -87,8 +87,11 @@ model = model.to(device)
 def inspect(i, last, mode='train'):
     # Same effect of `sysctl -w vm.drop_caches=1`
     # Requires sudo
-    with open('/proc/sys/vm/drop_caches', 'w') as stream:
-        stream.write('1\n')
+    try:
+        with open('/proc/sys/vm/drop_caches', 'w') as stream:
+            stream.write('1\n')
+    except PermissionError:
+        tqdm.write('Permission denied: Unable to free the page cache. Continuing without.')
 
     if mode == 'train':
         node_idx = dataset.shuffled_train_idx
