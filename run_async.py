@@ -328,7 +328,7 @@ def inference(mode='test'):
         # Forward
         out = model(batch_inputs, adjs)
         loss = F.nll_loss(out, batch_labels.long())
-        tensor_free(batch_inputs)
+        del batch_inputs
 
         if args.compute_type == 'gpu':
             torch.cuda.synchronize()
