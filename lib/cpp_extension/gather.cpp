@@ -40,9 +40,8 @@ torch::Tensor gather_mmap(torch::Tensor features, torch::Tensor idx, int64_t fea
         .layout(torch::kStrided)
         .device(torch::kCPU)
         .requires_grad(false);
-    auto result = torch::from_blob(result_buffer, {num_idx, feature_dim}, options, [result_buffer](void* p) {
-        free(result_buffer);
-    });
+    auto result = torch::from_blob(result_buffer, {num_idx, feature_dim}, options).clone();
+    free(result_buffer);
 
     return result;
 
