@@ -27,6 +27,7 @@ argparser.add_argument('--lr', type=float, default=0.003)
 argparser.add_argument('--model', type=str, default="sage")
 argparser.add_argument('--dataset', type=str, default='ogbn-papers100M')
 argparser.add_argument('--dataset-root', type=str, default='./data/dataset')
+argparser.add_argument('--trace-dir', type=str, default='./trace')
 argparser.add_argument('--exp-name', type=str, default=None)
 argparser.add_argument('--sizes', type=str, default='10,10,10')
 argparser.add_argument('--sb-size', type=int, default='1000')
@@ -50,7 +51,7 @@ if args.verbose:
 if args.exp_name is None:
     now = datetime.now()
     args.exp_name = now.strftime('%Y_%m_%d_%H_%M_%S')
-os.makedirs(os.path.join('./trace', args.exp_name), exist_ok=True)
+os.makedirs(os.path.join(args.trace_dir, args.exp_name), exist_ok=True)
 sizes = [int(size) for size in args.sizes.split(',')]
 dataset = GinexDataset(path=dataset_path, split_idx_path=split_idx_path, num_features=args.features)
 num_nodes = dataset.num_nodes
