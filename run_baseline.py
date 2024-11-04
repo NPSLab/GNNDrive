@@ -127,7 +127,7 @@ def train(epoch):
         # Free
         total_loss += float(loss)
         total_correct += int(out.argmax(dim=-1).eq(batch_labels_cuda.long()).sum())
-        tensor_free(batch_inputs)
+        del(batch_inputs)
         del(batch_inputs_cuda)
         del(ids)
         del(adjs)
@@ -174,7 +174,7 @@ def inference(mode='test'):
         # Forward
         out = model(batch_inputs_cuda, adjs)
         loss = F.nll_loss(out, batch_labels_cuda.long())
-        tensor_free(batch_inputs)
+        del(batch_inputs)
 
         torch.cuda.synchronize()
         total_loss += float(loss)
