@@ -104,7 +104,7 @@ def inspect(i, last, mode='train'):
     # No changeset precomputation when i == 0
     if i != 0:
         effective_sb_size = int((node_idx.numel()%(args.sb_size*args.batch_size) + args.batch_size-1) / args.batch_size) if last else args.sb_size
-        cache = FeatureCache(args.feature_cache_size, effective_sb_size, num_nodes, mmapped_features, num_features, args.exp_name, i - 1, args.verbose)
+        cache = FeatureCache(args.feature_cache_size, effective_sb_size, num_nodes, mmapped_features, num_features, args.exp_name, i - 1, args.trace_dir, args.verbose)
         # Pass 1 and 2 are executed before starting sb sample.
         # We overlap only the pass 3 of changeset precomputation, 
         # which is the most time consuming part, with sb sample.
@@ -130,7 +130,7 @@ def inspect(i, last, mode='train'):
 
     start_idx = i * args.batch_size * args.sb_size 
     end_idx = min((i+1) * args.batch_size * args.sb_size, node_idx.numel())
-    loader = GinexNeighborSampler(indptr, dataset.indices_path, args.exp_name, i, node_idx=node_idx[start_idx:end_idx],
+    loader = GinexNeighborSampler(indptr, dataset.indices_path, args.exp_name, i, args.trace_dir, node_idx=node_idx[start_idx:end_idx],
                                        sizes=sizes, num_nodes = num_nodes,
                                        cache_data = neighbor_cache, address_table = neighbor_cachetable,
                                        batch_size=args.batch_size,
@@ -157,9 +157,9 @@ def switch(cache, initial_cache_indices):
 def trace_load(q, indices, sb):
     for i in indices:
         q.put((
-            torch.load('./trace/' + args.exp_name + '/' + 'sb_' + str(sb) + '_ids_' + str(i) + '.pth'),
-            torch.load('./trace/' + args.exp_name + '/' + 'sb_' + str(sb) + '_adjs_' + str(i) + '.pth'),
-            torch.load('./trace/' + args.exp_name + '/' + 'sb_' + str(sb) + '_update_' + str(i) + '.pth'),
+            torch.load(args.trace_dir + args.exp_name + '/' + 'sb_' + str(sb) + '_ids_' + str(i) + '.pth'),
+            torch.load(args.trace_dir + args.exp_name + '/' + 'sb_' + str(sb) + '_adjs_' + str(i) + '.pth'),
+            torch.load(args.trace_dir + args.exp_name + '/' + 'sb_' + str(sb) + '_update_' + str(i) + '.pth'),
             ))
 
 
@@ -170,9 +170,9 @@ def gather(gather_q, n_id, cache, batch_size):
 
 
 def delete_trace(i):
-    n_id_filelist = glob.glob('./trace/' + args.exp_name + '/sb_' + str(i - 1) + '_ids_*')
-    adjs_filelist = glob.glob('./trace/' + args.exp_name + '/sb_' + str(i - 1) + '_adjs_*')
-    cache_filelist = glob.glob('./trace/' + args.exp_name + '/sb_' + str(i - 1) + '_update_*')
+    n_id_filelist = glob.glob(args.trace_dir + args.exp_name + '/sb_' + str(i - 1) + '_ids_*')
+    adjs_filelist = glob.glob(args.trace_dir + args.exp_name + '/sb_' + str(i - 1) + '_adjs_*')
+    cache_filelist = glob.glob(args.trace_dir + args.exp_name + '/sb_' + str(i - 1) + '_update_*')
 
     for n_id_file in n_id_filelist:
         try:

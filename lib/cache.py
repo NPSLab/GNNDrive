@@ -9,20 +9,20 @@ import os
 from tqdm import tqdm
 
 
-def save(i, in_indices, in_indices_, out_indices, exp_name, sb):
-    path = './trace/' + exp_name + '/sb_' + str(sb) + '_update_' + str(i) + '.pth'
+def save(i, in_indices, in_indices_, out_indices, exp_name, sb, trace_dir):
+    path = trace_dir + exp_name + '/sb_' + str(sb) + '_update_' + str(i) + '.pth'
     torch.save((in_indices.cpu(), in_indices_.cpu(), out_indices.cpu()), path)
 
 
-def load(n_id_list, indices, exp_name, sb):
+def load(n_id_list, indices, exp_name, sb, trace_dir):
     for i in indices:
-        n_id = torch.load('./trace/' + exp_name + '/sb_' + str(sb) + '_ids_' + str(i) + '.pth')
+        n_id = torch.load(trace_dir + exp_name + '/sb_' + str(sb) + '_ids_' + str(i) + '.pth')
         n_id_list[i] = n_id
 
 
-def load_into_queue(q, indices, exp_name, sb):
+def load_into_queue(q, indices, exp_name, sb, trace_dir):
     for i in indices:
-        q.put(torch.load('./trace/' + exp_name + '/sb_' + str(sb) + '_ids_' + str(i) + '.pth'))
+        q.put(torch.load(trace_dir + exp_name + '/sb_' + str(sb) + '_ids_' + str(i) + '.pth'))
 
 
 def send(q, n_id_list, indices):
@@ -50,7 +50,7 @@ class FeatureCache:
 
     '''
     def __init__(self, size, effective_sb_size, num_nodes, mmapped_features, 
-            feature_dim, exp_name, sb, verbose):
+            feature_dim, exp_name, sb, trace_dir, verbose):
         
         self.size = size
         self.effective_sb_size = effective_sb_size
@@ -63,6 +63,7 @@ class FeatureCache:
         self.feature_dim = feature_dim
         self.exp_name = exp_name
         self.sb = sb
+        self.trace_dir = trace_dir
         self.verbose = verbose
 
         # The address table of the cache has num_nodes entries each of which is a single
@@ -93,7 +94,7 @@ class FeatureCache:
         n_id_list = [[]] * self.effective_sb_size
         loader = list()
         for t in range(num_threads):
-            loader.append(threading.Thread(target=load, args=( n_id_list, list(range(t, len(n_id_list), num_threads)), self.exp_name, self.sb ) ) )
+            loader.append(threading.Thread(target=load, args=( n_id_list, list(range(t, len(n_id_list), num_threads)), self.exp_name, self.sb, self.trace_dir ) ) )
             loader[t].start()
         for t in range(num_threads):
             loader[t].join()
@@ -189,7 +190,7 @@ class FeatureCache:
         num_threads = 16
         for t in range(num_threads):
             q.append(Queue(maxsize=2))
-            loader.append(threading.Thread(target=load_into_queue, args=(q[t], list(range(t, self.effective_sb_size, num_threads)), self.exp_name, self.sb), daemon=True))
+            loader.append(threading.Thread(target=load_into_queue, args=(q[t], list(range(t, self.effective_sb_size, num_threads)), self.exp_name, self.sb, self.trace_dir), daemon=True))
             loader[t].start()
 
         for i in range(self.effective_sb_size):
@@ -260,7 +261,7 @@ class FeatureCache:
             map_table[:] = -1
 
             # Multi-threaded save of changeset precomputation result
-            save_p = threading.Thread(target=save, args=(i, in_indices, in_positions, out_indices, self.exp_name, self.sb))
+            save_p = threading.Thread(target=save, args=(i, in_indices, in_positions, out_indices, self.exp_name, self.sb, self.trace_dir))
             save_p.start()
             
             del(in_indices); del(out_indices); del(in_positions);

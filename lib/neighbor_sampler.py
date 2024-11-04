@@ -60,7 +60,7 @@ class GinexNeighborSampler(torch.utils.data.DataLoader):
             `torch.utils.data.DataLoader`, such as `batch_size`,
             `shuffle`, `drop_last`m `num_workers`.
     '''
-    def __init__(self, indptr, indices, exp_name, sb,
+    def __init__(self, indptr, indices, exp_name, sb, trace_dir,
                  sizes: List[int], node_idx: Tensor,
                  cache_data = None, address_table = None,
                  num_nodes: Optional[int] = None,
@@ -77,6 +77,7 @@ class GinexNeighborSampler(torch.utils.data.DataLoader):
         self.sb = sb
         self.node_idx = node_idx
         self.num_nodes = num_nodes
+        self.trace_dir = trace_dir
 
         self.cache_data = cache_data
         self.address_table = address_table
@@ -115,8 +116,8 @@ class GinexNeighborSampler(torch.utils.data.DataLoader):
         
         self.lock.acquire()
         batch_count = self.batch_count.item()
-        n_id_filename = os.path.join('./trace', self.exp_name, 'sb_' + str(self.sb) + '_ids_' + str(self.batch_count.item()) + '.pth')
-        adjs_filename = os.path.join('./trace', self.exp_name, 'sb_' + str(self.sb) + '_adjs_' + str(self.batch_count.item()) + '.pth')
+        n_id_filename = os.path.join(self.trace_dir, self.exp_name, 'sb_' + str(self.sb) + '_ids_' + str(self.batch_count.item()) + '.pth')
+        adjs_filename = os.path.join(self.trace_dir, self.exp_name, 'sb_' + str(self.sb) + '_adjs_' + str(self.batch_count.item()) + '.pth')
         self.batch_count += 1
         self.lock.release()
 
