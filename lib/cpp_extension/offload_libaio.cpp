@@ -17,9 +17,10 @@
 #include <cuda_runtime.h>
 #include <cstring>
 #include <cstdlib>
+#include <fstream>
 
 #define ALIGNMENT 512
-#define ASYNC_ENYRY_NUM 80
+#define DEFAULT_AIO_MAX_NR 65536
 #define EVENT_BUFFER_SIZE 4
 
 
@@ -57,6 +58,7 @@ private:
 
     const std::string filename;
     int fd;
+    int max_aio_requests;
 
     torch::Tensor feature_tensor;
     float *cache_data;
@@ -106,9 +108,25 @@ private:
         }
         return false;
     }
+
+    int get_max_aio_requests(std::string max_file = "/proc/sys/fs/aio-max-nr") {
+        int max_aio_requests = DEFAULT_AIO_MAX_NR;
+        std::ifstream file(max_file);
+        if (file.is_open()) {
+            file >> max_aio_requests;
+            if (max_aio_requests <= 0) {
+                fprintf(stderr, "Invalid max number of requests %d. Will use DEFAULT_AIO_MAX_NR=%d instead.\n", max_aio_requests, DEFAULT_AIO_MAX_NR);
+                max_aio_requests = DEFAULT_AIO_MAX_NR;
+            }
+        } else {
+            fprintf(stderr, "Unable to open file %s to read the max number of "
+                    "requests.\nWill use DEFAULT_AIO_MAX_NR=%d instead.\n", max_file.c_str(), DEFAULT_AIO_MAX_NR);
+        }
+        return max_aio_requests;
+    }
     
     void init_cpu();
-    torch::Tensor cpu_async_load(torch::Tensor &idx);
+    torch::Tensor cpu_async_load(torch::Tensor &idx, int t_total);
 
 
     int64_t stage_size = 0;
@@ -137,6 +155,8 @@ Offloader::Offloader(const std::string &filename, const int64_t node_num,
 
     this->free_index_size = this->cache_size;
     this->cache_size = this->cache_size * group_size;
+
+    max_aio_requests = get_max_aio_requests();
 
     this->fd = open(filename.c_str(), O_RDONLY | O_DIRECT);
     if (this->fd < 0)
@@ -167,8 +187,8 @@ Offloader::Offloader(const std::string &filename, const int64_t node_num,
     {
         put_free_index(i);
     }
-    printf("Offloader init done %s %ld %ld %ld %s %d %ld %llu\n", filename.c_str(), 
-            this->node_size, this->feature_dim, this->cache_size, type.c_str(), device_id, this->mem_size, this->mem_size + (char *)this->cache_data);
+    printf("Offloader init done\nFilename: %s\nNode Size: %ld\nFeature Dim: %ld\nCache Size: %ld\nType: %s\nDevice ID: %d\nMemory Size: %ld\nMemory Address: %p\nMax AIO Requests: %d\n", 
+            filename.c_str(), this->node_size, this->feature_dim, this->cache_size, type.c_str(), device_id, this->mem_size, (void*)this->cache_data, this->max_aio_requests);
 
 }
 
@@ -265,7 +285,7 @@ torch::Tensor Offloader::async_load(torch::Tensor &idx, int t_id, int t_total)
     switch (this->async_type)
     {
     case AsyncType::CPU:
-        return cpu_async_load(idx);
+        return cpu_async_load(idx, t_total);
     case AsyncType::GPU:
         return gpu_async_load(idx, t_id, t_total);
     case AsyncType::GDS:
@@ -276,12 +296,14 @@ torch::Tensor Offloader::async_load(torch::Tensor &idx, int t_id, int t_total)
     }
 }
 
-torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx) 
+torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx, int t_total) 
 {
     omp_lock_t lock;
     omp_init_lock(&lock);
     bool need_load = false;
     std::unordered_set<int64_t> need_wait;
+    int max_aio_events = (max_aio_requests/2)/t_total;
+    assert(max_aio_events > 0);
 
     torch::Tensor remap_idx = torch::zeros_like(idx);
     int64_t num_idx = idx.numel();
@@ -327,7 +349,7 @@ torch::Tensor Offloader::cpu_async_load(torch::Tensor &idx)
         struct io_event events[EVENT_BUFFER_SIZE];
 
         memset(&ctx, 0, sizeof(ctx));
-        int ret = io_setup(ASYNC_ENYRY_NUM, &ctx);
+        int ret = io_setup(max_aio_events, &ctx);
         if (ret != 0)
         {
             fprintf(stderr, "Unable to setup io_context: %s\n", strerror(-ret));
@@ -471,6 +493,8 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
     omp_init_lock(&lock);
     bool need_load = false;
     std::unordered_set<int64_t> need_wait;
+    int max_aio_events = (max_aio_requests/2)/t_total;
+    assert(max_aio_events > 0);
 
     torch::Tensor remap_idx = torch::zeros_like(idx);
     int64_t num_idx = idx.numel();
@@ -518,7 +542,7 @@ torch::Tensor Offloader::gpu_async_load(torch::Tensor &idx, int t_id, int t_tota
         cudaStreamCreate(&read_stream);
 
         memset(&ctx, 0, sizeof(ctx));
-        int ret = io_setup(ASYNC_ENYRY_NUM, &ctx);
+        int ret = io_setup(max_aio_events, &ctx);
         if (ret != 0)
         {
             fprintf(stderr, "Unable to setup io_context: %s\n", strerror(-ret));
