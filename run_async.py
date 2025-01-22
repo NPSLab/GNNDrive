@@ -39,7 +39,7 @@ dataset_path = os.path.join(args.dataset_root, args.dataset + '-ginex')
 split_idx_path = os.path.join(dataset_path, 'split_idx.pth')
 
 # Prepare dataset
-features_path = os.path.join(dataset_path, 'features-' + str(args.features) + '.dat')
+features_path = os.path.join(dataset_path, 'features' + '.dat')
 sizes = [int(size) for size in args.sizes.split(',')]
 
 sample_worker_num = 2

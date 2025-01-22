@@ -8,9 +8,9 @@ from lib.utils import *
 def get_mmap_dataset(path='../data/dataset/ogbn-papers100M-ginex', split_idx_path=None, num_features=128):
     indptr_path = os.path.join(path, 'indptr.dat')
     indices_path = os.path.join(path, 'indices.dat')
-    features_path = os.path.join(path, 'features-' + str(num_features) + '.dat')
+    features_path = os.path.join(path, 'features' + '.dat')
     labels_path = os.path.join(path, 'labels.dat')
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
 
     conf = json.load(open(conf_path, 'r'))
 
@@ -45,7 +45,7 @@ def get_mmap_dataset_async(path='../data/dataset/ogbn-papers100M-ginex', split_i
     indptr_path = os.path.join(path, 'indptr.dat')
     indices_path = os.path.join(path, 'indices.dat')
     labels_path = os.path.join(path, 'labels.dat')
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
 
     conf = json.load(open(conf_path, 'r'))
 
@@ -77,7 +77,7 @@ def get_mmap_dataset_async(path='../data/dataset/ogbn-papers100M-ginex', split_i
 def get_mmap_dataset_share2(path='../data/dataset/ogbn-papers100M-ginex', split_idx_path=None, num_features=128):
     indptr_path = os.path.join(path, 'indptr.dat')
     indices_path = os.path.join(path, 'indices.dat')
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
 
     conf = json.load(open(conf_path, 'r'))
 
@@ -102,10 +102,10 @@ def get_mmap_dataset_share2(path='../data/dataset/ogbn-papers100M-ginex', split_
 
 
 def get_mmap_x(path='../data/dataset/ogbn-papers100M-ginex', split_idx_path=None, num_features=128):
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
     conf = json.load(open(conf_path, 'r'))
 
-    features_path = os.path.join(path, 'features-' + str(num_features) + '.dat')
+    features_path = os.path.join(path, 'features' + '.dat')
     features_shape = conf['features_shape']
     real_features = np.memmap(features_path, mode='r', shape=tuple(features_shape), dtype=conf['features_dtype'])
     real_features = torch.from_numpy(real_features)
@@ -114,7 +114,7 @@ def get_mmap_x(path='../data/dataset/ogbn-papers100M-ginex', split_idx_path=None
 
 
 def get_feature_info(path='../data/dataset/ogbn-papers100M-ginex', num_features=128):
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
     conf = json.load(open(conf_path, 'r'))
     num_features = conf['features_shape'][1]
     type_features = conf['features_dtype']
@@ -122,7 +122,7 @@ def get_feature_info(path='../data/dataset/ogbn-papers100M-ginex', num_features=
     return num_features, type_features
 
 def get_labels(path='../data/dataset/ogbn-papers100M-ginex', num_features=128):
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
     labels_path = os.path.join(path, 'labels.dat')
     conf = json.load(open(conf_path, 'r'))
     labels = np.fromfile(labels_path, dtype=conf['labels_dtype'], count=conf['num_nodes']).reshape(tuple([conf['labels_shape'][0]]))
@@ -131,7 +131,7 @@ def get_labels(path='../data/dataset/ogbn-papers100M-ginex', num_features=128):
     return labels
 
 def get_num_classes(path='../data/dataset/ogbn-papers100M-ginex', num_features=128):
-    conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+    conf_path = os.path.join(path, 'conf' + '.json')
     conf = json.load(open(conf_path, 'r'))
     num_classes = conf['num_classes']
     
@@ -142,9 +142,9 @@ class GinexDataset():
     def __init__(self, path='../data/dataset/ogbn-papers100M-ginex', split_idx_path=None, score_path=None, num_features=128):
         self.indptr_path = os.path.join(path, 'indptr.dat')
         self.indices_path = os.path.join(path, 'indices.dat')
-        self.features_path = os.path.join(path, 'features-' + str(num_features) + '.dat')
+        self.features_path = os.path.join(path, 'features' + '.dat')
         self.labels_path = os.path.join(path, 'labels.dat')
-        conf_path = os.path.join(path, 'conf-' + str(num_features) + '.json')
+        conf_path = os.path.join(path, 'conf' + '.json')
         self.conf = json.load(open(conf_path, 'r'))
 
         split_idx = torch.load(split_idx_path)
