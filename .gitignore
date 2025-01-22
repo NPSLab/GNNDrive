@@ -5,3 +5,7 @@ lib/__pycache__/
 lib/cpp_extension/__pycache__/
 *.pyc
 scripts/
+liburing-2.1/
+small_ssd
+liburing-2.1.zip
+
